@@ -3,8 +3,13 @@ import axios from '../utils/axiosCustomize';
 // ========== User API ==========
 /////////////////////////////////////////////////////////////////////////////////
 export const getUserWithPaginate = (page: number, limit: number, search = "") => {
-  const URL_BACKEND = `/api/users?current=${page}&pageSize=${limit}&keyword=${encodeURIComponent(search)}`;
-  return axios.get(URL_BACKEND);
+  const params = {
+    current: page,
+    pageSize: limit,
+    ...(search && { filter: `email:${search} or name:${search}` }),
+  };
+
+  return axios.get('/api/users', { params });
 };
  ////////////////////////////////////////////////////////////////////////
 export const createUserForAdmin = (email: string, name: string, password: string, role: string) => {
@@ -74,8 +79,17 @@ export const createReview = (productId: number, rating: number, comment: string,
 ///////////////////////////////////////////////////////////
 // Get products with pagination, search, filter
 export const getProductsWithPaginate = (page: number, limit: number, keyword = "", category: string, factory: string) => {
-  const URL_BACKEND = `/api/products/products-paginate?current=${page}&pageSize=${limit}&keyword=${encodeURIComponent(keyword)}&category=${encodeURIComponent(category)}&factory=${encodeURIComponent(factory)}`;
-  return axios.get(URL_BACKEND);
+  const filters: string[] = [`category:'${category}'`];
+  if (keyword) filters.push(`name~'${keyword}'`);
+  if (factory) filters.push(`factory:'${factory}'`);
+
+  const params = {
+    current: page,
+    pageSize: limit,
+    ...(filters.length && { filter: filters.join(" and ") }),
+  };
+
+  return axios.get('/api/products/products-paginate', { params });
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Get product details by Id
@@ -98,8 +112,44 @@ export const getTopSellingProduct = () => {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Filter products by category and filters
 export const getFilteredProducts = async (filters: ProductFilters) => {
-  const URL_BACKEND = `/api/products/filter`;
-  return await axios.post(URL_BACKEND, filters );
+  const clauses: string[] = [`category:'${filters.category}'`];
+
+  if (filters.factories?.length) {
+    clauses.push(`factory in (${filters.factories.map(f => `'${f}'`).join(",")})`);
+  }
+  if (filters.productFeatures?.length) {
+    clauses.push(`features.feature.id in (${filters.productFeatures.join(",")})`);
+  }
+  if (filters.minPrice !== undefined) {
+    clauses.push(`price >= ${filters.minPrice}`);
+  }
+  if (filters.maxPrice !== undefined) {
+    clauses.push(`price <= ${filters.maxPrice}`);
+  }
+  if (filters.cpu?.length) {
+    clauses.push(`cpu in (${filters.cpu.map(v => `'${v}'`).join(",")})`);
+  }
+  if (filters.ram?.length) {
+    clauses.push(`ram in (${filters.ram.map(v => `'${v}'`).join(",")})`);
+  }
+  if (filters.gpu?.length) {
+    clauses.push(`graphicsCard in (${filters.gpu.map(v => `'${v}'`).join(",")})`);
+  }
+  if (filters.storage?.length) {
+    clauses.push(`storage in (${filters.storage.map(v => `'${v}'`).join(",")})`);
+  }
+  if (filters.screenSize?.length) {
+    clauses.push(`(${filters.screenSize.map(v => `screen~'${v}'`).join(" or ")})`);
+  }
+  if (filters.screen?.length) {
+    clauses.push(`(${filters.screen.map(v => `screen~'${v}'`).join(" or ")})`);
+  }
+  if (filters.battery?.length) {
+    clauses.push(`battery in (${filters.battery.map(v => `'${v}'`).join(",")})`);
+  }
+
+  const params = { filter: clauses.join(" and ") };
+  return await axios.get('/api/products/filter', { params });
 };
 
 ////////////////////////////////////////////////////////////////////

@@ -36,7 +36,7 @@ const ManageProduct = () => {
   const [isSearching, setIsSearching] = useState(false);
 
   const [categoryFilter, setCategoryFilter] = useState("LAPTOP");
-  const [factoryFilter, setFactoryFilter] = useState("ALL");
+  const [factoryFilter, setFactoryFilter] = useState("");
 
   const [loading, setLoading] = useState(false);
 
@@ -54,7 +54,7 @@ const ManageProduct = () => {
     page = 1,
     keyword = "",
     category = "LAPTOP",
-    factory = "ALL"
+    factory = ""
   ) => {
     setLoading(true);
     try {
@@ -93,7 +93,7 @@ const ManageProduct = () => {
   }, [currentPage, categoryFilter, factoryFilter]);
 
   useEffect(() => {
-    setFactoryFilter("ALL");
+    setFactoryFilter("");
     setCurrentPage(1);
   }, [categoryFilter]);
 
@@ -207,7 +207,7 @@ const ManageProduct = () => {
             value={factoryFilter}
             onChange={(e) => setFactoryFilter(e.target.value)}
           >
-            <option value="ALL">Tất cả</option>
+            <option value="">Tất cả</option>
             {categoryFilter === "LAPTOP" && (
               <>
                 <option value="DELL">DELL</option>
